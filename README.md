@@ -58,60 +58,17 @@ And add the following line to your `init.scm`:
 
 ### 2. Configure Database Connections
 
-Create a configuration file at `~/.config/helix-dadbod/config.toml`:
-
-```toml
-# Log level: "error", "warn", "info", "debug", "trace"
-# Default: "info"
-# Logs are written to ~/.config/helix-dadbod/dadbod.log
-log_level = "info"
-
-# SECURITY WARNING: Skip SSH host key verification (INSECURE)
-# Only enable this in development/testing environments where you trust the network
-# skip_host_key_verification = false  # default: false
-
-# Direct database connection
-[[connections]]
-name = "local-db"
-type = "postgres"
-host = "localhost"
-port = 5432
-database = "mydb"
-username = "user"
-password = "pass"
-
-# SSH tunnel connection
-[[connections]]
-name = "remote-db"
-type = "postgres"
-host = "internal-db.example.com"  # From SSH server's perspective
-port = 5432
-database = "production"
-username = "dbuser"
-password = "dbpass"
-
-[connections.ssh_tunnel]
-host = "bastion.example.com"  # SSH jump host
-port = 22
-user = "sshuser"
-key_path = "~/.ssh/id_ed25519"  # Optional, auto-detects id_rsa or id_ed25519
-```
-
-**Important:** For SSH tunnels, the host must be in your `~/.ssh/known_hosts` file. Connect once manually if needed:
-
-```bash
-ssh user@bastion.example.com
-```
+Copy the `config.toml.example` to `~/.config/helix-dadbod/config.toml`
 
 ## Usage in Helix
 
-1. Open Helix: `hx`
+1. Open Helix
 2. Open connection picker: `:db-open-picker`
-3. Navigate with arrow keys, j/k, or Tab/Shift+Tab and confirm selection with Enter
-4. Or quickly select connection with one of the number keys (1-9)
-5. Write SQL in the upper pane
-6. Execute query: save the file or run `:db-execute` (or `:dbe`)
-7. View results in the lower pane (auto-reloaded)
+   3a. Navigate with arrow keys, j/k, or Tab/Shift+Tab and confirm selection with Enter
+   3b. Or quickly select connection with one of the number keys (1-9)
+3. Write SQL in the upper pane
+4. Execute query: save the file or run `:db-execute` (or `:dbe`)
+5. View results in the lower pane (auto-reloaded)
 
 ## Project Structure
 
@@ -239,13 +196,6 @@ cargo test -- --list                    # List all available tests
 
 - **lib.rs** (1 test)
   - `test_dadbod_from_config` - Initialize Dadbod from config file
-
-### Development Database
-
-```bash
-docker compose up -d     # Start PostgreSQL on port 5432
-docker compose down      # Stop PostgreSQL
-```
 
 ### Logging
 
