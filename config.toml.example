@@ -1,0 +1,65 @@
+# Example configuration for helix-dadbod
+# Copy this to ~/.config/helix-dadbod/config.toml and modify for your setup
+
+# Global settings
+log_level = "info"  # Options: "error", "warn", "info", "debug", "trace" (default: "info")
+# Logs are written to ~/.config/helix-dadbod/dadbod.log
+#
+# Log levels:
+#   error - Only critical errors (connection failures, parse errors)
+#   warn  - Warnings (failed host key verification, SQL errors)
+#   info  - Operations (connections, queries, tunnel creation)
+#   debug - Detailed debugging (host key verification steps, meta-commands)
+#   trace - Very verbose (all internal operations)
+
+# SECURITY WARNING: Skip SSH host key verification (INSECURE)
+# Only enable this in development/testing environments where you trust the network
+# skip_host_key_verification = false  # default: false
+
+# Direct PostgreSQL connection (no SSH tunnel)
+[[connections]]
+name = "local-postgres"
+type = "postgres"
+host = "localhost"
+port = 5432
+database = "postgres"
+username = "postgres"
+password = "postgres"
+
+# PostgreSQL via explicit SSH tunnel configuration
+[[connections]]
+name = "remote-postgres-explicit"
+type = "postgres"
+host = "db.internal.example.com"  # Database host (as seen from SSH server)
+port = 5432
+database = "production"
+username = "dbuser"
+password = "dbpass"
+
+[connections.ssh_tunnel]
+host = "jump.example.com"  # SSH jump host
+port = 22
+user = "sshuser"
+# key_path = "/home/user/.ssh/id_rsa"  # Optional, defaults to ~/.ssh/id_rsa or ~/.ssh/id_ed25519
+
+# PostgreSQL via SSH config reference
+[[connections]]
+name = "remote-postgres-config"
+type = "postgres"
+host = "localhost"  # Database is on the same machine as SSH server
+port = 5432
+database = "staging"
+username = "dbuser"
+
+[connections.ssh_tunnel]
+ssh_config = "staging-server"  # Must match an entry in ~/.ssh/config
+
+# Connection without password (for testing or peer auth)
+[[connections]]
+name = "local-dev"
+type = "postgres"
+host = "localhost"
+port = 5432
+database = "dev_db"
+username = "developer"
+# No password field - will use other auth methods
