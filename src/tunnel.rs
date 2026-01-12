@@ -52,20 +52,27 @@ impl client::Handler for SshClientHandler {
         // Verify the server's host key against known_hosts
         match crate::known_hosts::verify_host_key(&self.hostname, self.port, server_public_key) {
             Ok(true) => {
-                log::info!("Host key verified successfully for {}:{}", self.hostname, self.port);
+                log::info!(
+                    "Host key verified successfully for {}:{}",
+                    self.hostname,
+                    self.port
+                );
                 Ok(true)
             }
             Ok(false) => {
                 log::error!(
                     "Host key verification failed for {}:{} - host not found in known_hosts",
-                    self.hostname, self.port
+                    self.hostname,
+                    self.port
                 );
                 Err(russh::Error::UnknownKey)
             }
             Err(e) => {
                 log::error!(
                     "Error verifying host key for {}:{}: {}",
-                    self.hostname, self.port, e
+                    self.hostname,
+                    self.port,
+                    e
                 );
                 Err(russh::Error::UnknownKey)
             }
@@ -121,7 +128,11 @@ impl PortAllocator {
             // This handles the case where another process (e.g., another instance) is using it
             if let Ok(_listener) = std::net::TcpListener::bind(("127.0.0.1", port)) {
                 // Port is available, allocate it
-                log::debug!("Allocated port {} for connection '{}'", port, connection_name);
+                log::debug!(
+                    "Allocated port {} for connection '{}'",
+                    port,
+                    connection_name
+                );
                 self.allocated.insert(port, connection_name.to_string());
                 return Ok(port);
             }
@@ -205,7 +216,12 @@ impl TunnelManager {
             } => {
                 log::info!(
                     "Creating SSH tunnel: {}@{}:{} -> localhost:{} -> {}:{}",
-                    user, host, port, local_port, remote_host, remote_port
+                    user,
+                    host,
+                    port,
+                    local_port,
+                    remote_host,
+                    remote_port
                 );
 
                 let key_file = if let Some(path) = key_path {
@@ -219,8 +235,9 @@ impl TunnelManager {
                 log::info!("  Using key: {}", key_file.display());
 
                 // Load the private key
-                let private_key = load_secret_key(&key_file, None)
-                    .with_context(|| format!("Failed to load SSH key from {}", key_file.display()))?;
+                let private_key = load_secret_key(&key_file, None).with_context(|| {
+                    format!("Failed to load SSH key from {}", key_file.display())
+                })?;
 
                 // Create SSH configuration
                 let ssh_client_config = client::Config::default();
@@ -228,23 +245,21 @@ impl TunnelManager {
 
                 // Connect to SSH server
                 log::debug!("Connecting to SSH server {}:{}...", host, port);
-                let ssh_handler = SshClientHandler::new(host.clone(), *port, self.skip_host_key_verification);
-                let mut ssh_session = client::connect(
-                    ssh_client_config,
-                    (host.as_str(), *port),
-                    ssh_handler,
-                )
-                .await
-                .with_context(|| {
-                    format!(
-                        "Failed to connect to SSH server {}:{}. \
+                let ssh_handler =
+                    SshClientHandler::new(host.clone(), *port, self.skip_host_key_verification);
+                let mut ssh_session =
+                    client::connect(ssh_client_config, (host.as_str(), *port), ssh_handler)
+                        .await
+                        .with_context(|| {
+                            format!(
+                                "Failed to connect to SSH server {}:{}. \
                          Possible reasons:\n  \
                          - Network connectivity issues\n  \
                          - Host key verification failed (if skip_host_key_verification=false)\n  \
                          - SSH server unreachable",
-                        host, port
-                    )
-                })?;
+                                host, port
+                            )
+                        })?;
                 log::debug!("SSH connection established to {}:{}", host, port);
 
                 // Authenticate
@@ -338,15 +353,21 @@ impl TunnelManager {
                     _forwarding_task: forwarding_task,
                 })
             }
-            SshTunnel::ConfigRef { ssh_config: config_name } => {
+            SshTunnel::ConfigRef {
+                ssh_config: config_name,
+            } => {
                 log::info!(
                     "Creating SSH tunnel using config: {} -> localhost:{} -> {}:{}",
-                    config_name, local_port, remote_host, remote_port
+                    config_name,
+                    local_port,
+                    remote_host,
+                    remote_port
                 );
 
                 // Parse the SSH config file
-                let host_config = ssh_config::parse_ssh_config(config_name)
-                    .with_context(|| format!("Failed to parse SSH config for host '{}'", config_name))?;
+                let host_config = ssh_config::parse_ssh_config(config_name).with_context(|| {
+                    format!("Failed to parse SSH config for host '{}'", config_name)
+                })?;
 
                 log::info!(
                     "  Parsed config: {}@{}:{}",
@@ -368,22 +389,28 @@ impl TunnelManager {
                 let key_file = if let Some(path) = host_config.identity_file {
                     path
                 } else {
-                    find_default_ssh_key()
-                        .context("No IdentityFile specified in SSH config and no default key found")?
+                    find_default_ssh_key().context(
+                        "No IdentityFile specified in SSH config and no default key found",
+                    )?
                 };
 
                 log::info!("  Using key: {}", key_file.display());
 
                 // Load the private key
-                let private_key = load_secret_key(&key_file, None)
-                    .with_context(|| format!("Failed to load SSH key from {}", key_file.display()))?;
+                let private_key = load_secret_key(&key_file, None).with_context(|| {
+                    format!("Failed to load SSH key from {}", key_file.display())
+                })?;
 
                 // Create SSH configuration
                 let ssh_client_config = client::Config::default();
                 let ssh_client_config = Arc::new(ssh_client_config);
 
                 // Connect to SSH server
-                let ssh_handler = SshClientHandler::new(host_config.hostname.clone(), host_config.port, self.skip_host_key_verification);
+                let ssh_handler = SshClientHandler::new(
+                    host_config.hostname.clone(),
+                    host_config.port,
+                    self.skip_host_key_verification,
+                );
                 let mut ssh_session = client::connect(
                     ssh_client_config,
                     (host_config.hostname.as_str(), host_config.port),
@@ -520,15 +547,11 @@ impl Default for TunnelManager {
 /// 1. ~/.ssh/id_rsa
 /// 2. ~/.ssh/id_ed25519
 fn find_default_ssh_key() -> Result<PathBuf> {
-    let home = std::env::var("HOME")
-        .context("HOME environment variable not set")?;
+    let home = std::env::var("HOME").context("HOME environment variable not set")?;
     let ssh_dir = PathBuf::from(home).join(".ssh");
 
     // Try common SSH key types in order
-    let key_candidates = vec![
-        ssh_dir.join("id_rsa"),
-        ssh_dir.join("id_ed25519"),
-    ];
+    let key_candidates = vec![ssh_dir.join("id_rsa"), ssh_dir.join("id_ed25519")];
 
     for key_path in key_candidates {
         if key_path.exists() {

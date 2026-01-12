@@ -33,7 +33,10 @@ impl Dadbod {
     pub fn from_file(path: PathBuf) -> Result<Self> {
         let config = SqlConfig::from_file(&path)?;
         init_logging(&config.log_level);
-        log::info!("Initialized helix-dadbod from config file: {}", path.display());
+        log::info!(
+            "Initialized helix-dadbod from config file: {}",
+            path.display()
+        );
         Ok(Self::from_config(config))
     }
 
@@ -271,26 +274,24 @@ mod tests {
     fn test_dadbod_from_config() {
         // Test that we can create a Dadbod instance from a config
         // This validates the basic initialization without needing a real database
-        
+
         let config = SqlConfig {
             log_level: "error".to_string(),
             skip_host_key_verification: false,
-            connections: vec![
-                config::Connection {
-                    name: "test_db".to_string(),
-                    db_type: "postgres".to_string(),
-                    host: "localhost".to_string(),
-                    port: 5432,
-                    database: "test".to_string(),
-                    username: "test".to_string(),
-                    password: Some("test".to_string()),
-                    ssh_tunnel: None,
-                },
-            ],
+            connections: vec![config::Connection {
+                name: "test_db".to_string(),
+                db_type: "postgres".to_string(),
+                host: "localhost".to_string(),
+                port: 5432,
+                database: "test".to_string(),
+                username: "test".to_string(),
+                password: Some("test".to_string()),
+                ssh_tunnel: None,
+            }],
         };
 
         let dadbod = Dadbod::from_config(config);
-        
+
         // Should have one connection configured
         // Note: We can't test async methods without tokio runtime,
         // but we can verify the instance was created successfully

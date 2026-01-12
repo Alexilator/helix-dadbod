@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Mutex;
-use tokio_postgres::{Client, NoTls};
+use tokio_postgres::{types::Type, Client, NoTls};
 
 /// Manages database connections
 pub struct ConnectionManager {
@@ -182,6 +182,142 @@ impl ConnectionManager {
         let version: String = row.get(0);
 
         Ok(version)
+    }
+
+    /// Convert a PostgreSQL value to a string representation based on its type
+    fn value_to_string(row: &tokio_postgres::Row, idx: usize, col_type: &Type) -> String {
+        // Check type by name since Type doesn't implement PartialEq for constants
+        if *col_type == Type::BOOL {
+            return row
+                .try_get::<_, Option<bool>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::INT2 {
+            return row
+                .try_get::<_, Option<i16>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::INT4 {
+            return row
+                .try_get::<_, Option<i32>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::INT8 {
+            return row
+                .try_get::<_, Option<i64>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::FLOAT4 {
+            return row
+                .try_get::<_, Option<f32>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::FLOAT8 {
+            return row
+                .try_get::<_, Option<f64>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::UUID {
+            return row
+                .try_get::<_, Option<uuid::Uuid>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::TIMESTAMP {
+            return row
+                .try_get::<_, Option<chrono::NaiveDateTime>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::TIMESTAMPTZ {
+            return row
+                .try_get::<_, Option<chrono::DateTime<chrono::Utc>>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::DATE {
+            return row
+                .try_get::<_, Option<chrono::NaiveDate>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::TIME {
+            return row
+                .try_get::<_, Option<chrono::NaiveTime>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::JSON || *col_type == Type::JSONB {
+            return row
+                .try_get::<_, Option<serde_json::Value>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        if *col_type == Type::BYTEA {
+            return row
+                .try_get::<_, Option<Vec<u8>>>(idx)
+                .ok()
+                .flatten()
+                .map(|v| format!("\\x{}", hex::encode(v)))
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        // NUMERIC/DECIMAL types - handle as string to preserve precision
+        if *col_type == Type::NUMERIC {
+            return row
+                .try_get::<_, Option<String>>(idx)
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "NULL".to_string());
+        }
+
+        // Fallback: try as string for text types and all other types
+        row.try_get::<_, Option<String>>(idx)
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "NULL".to_string())
     }
 
     /// Strip SQL comments (both -- and /* */) from the input
@@ -367,9 +503,9 @@ impl ConnectionManager {
                     // Add rows
                     for row in &rows {
                         let mut row_data = Vec::new();
-                        for (idx, _col) in columns.iter().enumerate() {
-                            let value: Option<String> = row.try_get(idx).ok();
-                            row_data.push(value.unwrap_or_else(|| "NULL".to_string()));
+                        for (idx, col) in columns.iter().enumerate() {
+                            let value = Self::value_to_string(row, idx, col.type_());
+                            row_data.push(value);
                         }
                         table.add_row(row_data);
                     }

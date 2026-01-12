@@ -1,6 +1,6 @@
 # helix-dadbod
 
-A database plugin for Helix editor, inspired by vim-dadbod, vim-dadbod-ui, and vim-dadbod-ssh.
+A database interface for the Helix editor, inspired by vim-dadbod, vim-dadbod-ui, and vim-dadbod-ssh.
 
 ## Features
 
@@ -217,6 +217,14 @@ Log levels:
 
 Planned features:
 
+- Support all postgres data types, at the moment only:
+  - bool
+  - string
+  - integers and numerics
+  - floats
+  - uuid
+  - timestamps and dates
+  - json and jsonb
 - MySQL and SQLite support
 
 # Influence

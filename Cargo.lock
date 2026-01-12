@@ -983,18 +983,21 @@ dependencies = [
  "chrono",
  "comfy-table",
  "dirs",
+ "hex",
  "hmac",
  "log",
  "once_cell",
  "russh",
  "russh-keys",
  "serde",
+ "serde_json",
  "sha1",
  "simplelog",
  "steel-core",
  "tokio",
  "tokio-postgres",
  "toml",
+ "uuid",
 ]
 
 [[package]]
@@ -1002,6 +1005,12 @@ name = "hermit-abi"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hex-literal"
@@ -1626,6 +1635,9 @@ dependencies = [
  "chrono",
  "fallible-iterator",
  "postgres-protocol",
+ "serde_core",
+ "serde_json",
+ "uuid",
 ]
 
 [[package]]
@@ -2663,6 +2675,16 @@ checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
 dependencies = [
  "crypto-common",
  "subtle",
+]
+
+[[package]]
+name = "uuid"
+version = "1.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2e054861b4bd027cd373e18e8d8d8e6548085000e41290d95ce0c373a654b4a"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
 ]
 
 [[package]]
